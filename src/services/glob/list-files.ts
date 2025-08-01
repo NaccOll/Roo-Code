@@ -281,6 +281,14 @@ function buildRecursiveArgs(dirPath: string): string[] {
 			continue
 		}
 
+		const normalizeIgnoredDir = path.normalize(dir)
+		const isParentHiddenDir = normalizedPath.includes(normalizeIgnoredDir)
+		if (isParentHiddenDir) {
+			// If the ignored directory name is part of the dirPath itself,
+			// we should not add a global exclusion for it.
+			continue
+		}
+
 		// For all other cases, exclude the directory pattern globally
 		args.push("-g", `!**/${dir}/**`)
 	}
