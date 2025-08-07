@@ -11,7 +11,7 @@ export interface StandardToolCallResponse {
 	toolCalls: StandardToolCall[]
 }
 
-function isJson(str: string) {
+export function isJson(str: string) {
 	if (typeof str !== "string") {
 		return false
 	}
