@@ -140,13 +140,6 @@ export async function activate(context: vscode.ExtensionContext) {
 			outputChannel.appendLine("[CloudService] Failed to get bridge config")
 			return
 		}
-
-		ExtensionBridgeService.handleRemoteControlState(
-			userInfo,
-			contextProxy.getValue("remoteControlEnabled"),
-			{ ...bridgeConfig, provider, sessionId: vscode.env.sessionId },
-			(message: string) => outputChannel.appendLine(message),
-		)
 	})
 
 	// Add to subscriptions for proper cleanup on deactivate.

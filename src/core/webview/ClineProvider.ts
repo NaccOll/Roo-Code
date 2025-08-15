@@ -2203,13 +2203,6 @@ export class ClineProvider
 			return
 		}
 
-		await ExtensionBridgeService.handleRemoteControlState(
-			userInfo,
-			enabled,
-			{ ...bridgeConfig, provider: this, sessionId: vscode.env.sessionId },
-			(message: string) => this.log(message),
-		)
-
 		if (isRemoteControlEnabled(userInfo, enabled)) {
 			const currentTask = this.getCurrentTask()
 
