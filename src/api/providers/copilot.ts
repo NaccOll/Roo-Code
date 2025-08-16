@@ -20,6 +20,7 @@ import type { SingleCompletionHandler, ApiHandlerCreateMessageMetadata } from ".
 import { getApiRequestTimeout } from "./utils/timeout-config"
 import { CopilotAuthenticator } from "./fetchers/copilot"
 import { getModels } from "./fetchers/modelCache"
+import { ToolRegistry } from "../../core/prompts/tools/schemas/tool-registry"
 
 /**
  *  Copilot API handler that provides direct access to Copilot models
@@ -130,6 +131,13 @@ export class CopilotHandler extends BaseProvider implements SingleCompletionHand
 			stream_options: { include_usage: true },
 			max_completion_tokens: modelInfo.maxTokens,
 		}
+		if (metadata?.tools && metadata.tools.length > 0) {
+			requestOptions.tools = ToolRegistry.getInstance().generateFunctionCallSchemas(
+				metadata.tools!,
+				metadata.toolArgs,
+			)
+			requestOptions.tool_choice = "required"
+		}
 
 		const stream = await this.client.chat.completions.create(requestOptions, {
 			headers,
@@ -142,6 +150,9 @@ export class CopilotHandler extends BaseProvider implements SingleCompletionHand
 					type: "text",
 					text: delta.content,
 				}
+			}
+			if (delta?.tool_calls) {
+				yield { type: "tool_call", toolCalls: delta.tool_calls, toolCallType: "openai" }
 			}
 
 			// Handle usage information
