@@ -36,6 +36,7 @@ import {
 	DoubaoHandler,
 	ZAiHandler,
 	FireworksHandler,
+	CopilotHandler,
 	RooHandler,
 	FeatherlessHandler,
 	VercelAiGatewayHandler,
@@ -157,6 +158,8 @@ export function buildApiHandler(configuration: ProviderSettings): ApiHandler {
 			return new FireworksHandler(options)
 		case "io-intelligence":
 			return new IOIntelligenceHandler(options)
+		case "copilot":
+			return new CopilotHandler(options)
 		case "roo":
 			// Never throw exceptions from provider constructors
 			// The provider-proxy server will handle authentication and return appropriate error codes

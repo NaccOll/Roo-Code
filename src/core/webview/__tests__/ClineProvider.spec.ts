@@ -2689,7 +2689,7 @@ describe("ClineProvider - Router Models", () => {
 			apiKey: "litellm-key",
 			baseUrl: "http://localhost:4000",
 		})
-
+		expect(getModels).toHaveBeenCalledWith({ provider: "copilot" })
 		// Verify response was sent
 		expect(mockPostMessage).toHaveBeenCalledWith({
 			type: "routerModels",
@@ -2702,6 +2702,7 @@ describe("ClineProvider - Router Models", () => {
 				litellm: mockModels,
 				ollama: {},
 				lmstudio: {},
+				copilot: mockModels,
 				"vercel-ai-gateway": mockModels,
 			},
 		})
@@ -2736,6 +2737,7 @@ describe("ClineProvider - Router Models", () => {
 			.mockResolvedValueOnce(mockModels) // vercel-ai-gateway success
 			.mockResolvedValueOnce(mockModels) // deepinfra success
 			.mockRejectedValueOnce(new Error("LiteLLM connection failed")) // litellm fail
+			.mockResolvedValueOnce(mockModels) // copilot success
 
 		await messageHandler({ type: "requestRouterModels" })
 
@@ -2751,6 +2753,7 @@ describe("ClineProvider - Router Models", () => {
 				ollama: {},
 				lmstudio: {},
 				litellm: {},
+				copilot: mockModels,
 				"vercel-ai-gateway": mockModels,
 			},
 		})
@@ -2863,6 +2866,7 @@ describe("ClineProvider - Router Models", () => {
 				litellm: {},
 				ollama: {},
 				lmstudio: {},
+				copilot: mockModels,
 				"vercel-ai-gateway": mockModels,
 			},
 		})

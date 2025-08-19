@@ -41,6 +41,7 @@ describe("Model Validation Functions", () => {
 		lmstudio: {},
 		deepinfra: {},
 		"io-intelligence": {},
+		copilot: {},
 		"vercel-ai-gateway": {},
 	}
 

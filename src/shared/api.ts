@@ -27,6 +27,7 @@ const routerNames = [
 	"ollama",
 	"lmstudio",
 	"io-intelligence",
+	"copilot",
 	"deepinfra",
 	"vercel-ai-gateway",
 ] as const
@@ -154,4 +155,5 @@ export type GetModelsOptions =
 	| { provider: "lmstudio"; baseUrl?: string }
 	| { provider: "deepinfra"; apiKey?: string; baseUrl?: string }
 	| { provider: "io-intelligence"; apiKey: string }
+	| { provider: "copilot" }
 	| { provider: "vercel-ai-gateway" }
