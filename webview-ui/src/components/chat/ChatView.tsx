@@ -167,6 +167,7 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 	const apiMetrics = useMemo(() => getApiMetrics(modifiedMessages), [modifiedMessages])
 
 	const [inputValue, setInputValue] = useState("")
+	const inputValueRef = useRef(inputValue)
 	const textAreaRef = useRef<HTMLTextAreaElement>(null)
 	const [sendingDisabled, setSendingDisabled] = useState(false)
 	const [selectedImages, setSelectedImages] = useState<string[]>([])
@@ -207,6 +208,11 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 	useEffect(() => {
 		clineAskRef.current = clineAsk
 	}, [clineAsk])
+
+	// Keep inputValueRef in sync with inputValue state
+	useEffect(() => {
+		inputValueRef.current = inputValue
+	}, [inputValue])
 
 	useEffect(() => {
 		isMountedRef.current = true
@@ -1502,7 +1508,12 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 					return currentValue !== "" ? `${currentValue} \n${suggestion.answer}` : suggestion.answer
 				})
 			} else {
+				// Don't clear the input value when sending a follow-up choice
+				// The message should be sent but the text area should preserve what the user typed
+				const preservedInput = inputValueRef.current
 				handleSendMessage(suggestion.answer, [])
+				// Restore the input value after sending
+				setInputValue(preservedInput)
 			}
 		},
 		[handleSendMessage, setInputValue, switchToMode, alwaysAllowModeSwitch, clineAsk, markFollowUpAsAnswered],
