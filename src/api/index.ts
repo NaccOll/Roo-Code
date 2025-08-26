@@ -38,6 +38,7 @@ import {
 	FireworksHandler,
 	RooHandler,
 	FeatherlessHandler,
+	VercelAiGatewayHandler,
 } from "./providers"
 import { NativeOllamaHandler } from "./providers/native-ollama"
 import { ToolArgs } from "../core/prompts/tools/types"
@@ -160,6 +161,8 @@ export function buildApiHandler(configuration: ProviderSettings): ApiHandler {
 			return new RooHandler(options)
 		case "featherless":
 			return new FeatherlessHandler(options)
+		case "vercel-ai-gateway":
+			return new VercelAiGatewayHandler(options)
 		default:
 			apiProvider satisfies "gemini-cli" | undefined
 			return new AnthropicHandler(options)
