@@ -55,6 +55,9 @@
 		"mistralProvider": "Mistral",
 		"mistralApiKeyLabel": "API Key:",
 		"mistralApiKeyPlaceholder": "Enter your Mistral API key",
+		"vercelAiGatewayProvider": "Vercel AI Gateway",
+		"vercelAiGatewayApiKeyLabel": "API Key",
+		"vercelAiGatewayApiKeyPlaceholder": "Enter your Vercel AI Gateway API key",
 		"openaiCompatibleProvider": "OpenAI Compatible",
 		"openAiKeyLabel": "OpenAI API Key",
 		"openAiKeyPlaceholder": "Enter your OpenAI API key",
@@ -124,6 +127,7 @@
 			"modelDimensionRequired": "Model dimension is required",
 			"geminiApiKeyRequired": "Gemini API key is required",
 			"mistralApiKeyRequired": "Mistral API key is required",
+			"vercelAiGatewayApiKeyRequired": "Vercel AI Gateway API key is required",
 			"ollamaBaseUrlRequired": "Ollama base URL is required",
 			"baseUrlRequired": "Base URL is required",
 			"modelDimensionMinValue": "Model dimension must be greater than 0"
@@ -236,6 +240,8 @@
 		"awsCustomArnDesc": "Make sure the region in the ARN matches your selected AWS Region above.",
 		"openRouterApiKey": "OpenRouter API Key",
 		"getOpenRouterApiKey": "Get OpenRouter API Key",
+		"vercelAiGatewayApiKey": "Vercel AI Gateway API Key",
+		"getVercelAiGatewayApiKey": "Get Vercel AI Gateway API Key",
 		"apiKeyStorageNotice": "API keys are stored securely in VSCode's Secret Storage",
 		"glamaApiKey": "Glama API Key",
 		"getGlamaApiKey": "Get Glama API Key",
@@ -798,7 +804,8 @@
 		"modelAvailability": "The model ID ({{modelId}}) you provided is not available. Please choose a different model.",
 		"providerNotAllowed": "Provider '{{provider}}' is not allowed by your organization",
 		"modelNotAllowed": "Model '{{model}}' is not allowed for provider '{{provider}}' by your organization",
-		"profileInvalid": "This profile contains a provider or model that is not allowed by your organization"
+		"profileInvalid": "This profile contains a provider or model that is not allowed by your organization",
+		"qwenCodeOauthPath": "You must provide a valid OAuth credentials path."
 	},
 	"placeholders": {
 		"apiKey": "Enter API Key...",

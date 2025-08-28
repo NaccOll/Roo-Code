@@ -30,6 +30,7 @@ import {
 	ChutesHandler,
 	LiteLLMHandler,
 	ClaudeCodeHandler,
+	QwenCodeHandler,
 	SambaNovaHandler,
 	IOIntelligenceHandler,
 	DoubaoHandler,
@@ -37,6 +38,7 @@ import {
 	FireworksHandler,
 	RooHandler,
 	FeatherlessHandler,
+	VercelAiGatewayHandler,
 } from "./providers"
 import { NativeOllamaHandler } from "./providers/native-ollama"
 
@@ -108,6 +110,8 @@ export function buildApiHandler(configuration: ProviderSettings): ApiHandler {
 			return new DeepSeekHandler(options)
 		case "doubao":
 			return new DoubaoHandler(options)
+		case "qwen-code":
+			return new QwenCodeHandler(options)
 		case "moonshot":
 			return new MoonshotHandler(options)
 		case "vscode-lm":
@@ -148,6 +152,8 @@ export function buildApiHandler(configuration: ProviderSettings): ApiHandler {
 			return new RooHandler(options)
 		case "featherless":
 			return new FeatherlessHandler(options)
+		case "vercel-ai-gateway":
+			return new VercelAiGatewayHandler(options)
 		default:
 			apiProvider satisfies "gemini-cli" | undefined
 			return new AnthropicHandler(options)
