@@ -17,6 +17,7 @@ interface ImageGenerationSettingsProps {
 // Hardcoded list of image generation models
 const IMAGE_GENERATION_MODELS = [
 	{ value: "google/gemini-2.5-flash-image-preview", label: "Gemini 2.5 Flash Image Preview" },
+	{ value: "google/gemini-2.5-flash-image-preview:free", label: "Gemini 2.5 Flash Image Preview (Free)" },
 	// Add more models as they become available
 ]
 
@@ -35,14 +36,32 @@ export const ImageGenerationSettings = ({
 		imageGenerationSettings.selectedModel || IMAGE_GENERATION_MODELS[0].value,
 	)
 
-	// Update parent state when local state changes
+	// Update local state when apiConfiguration changes (e.g., when switching profiles)
 	useEffect(() => {
+		setOpenRouterApiKey(imageGenerationSettings.openRouterApiKey || "")
+		setSelectedModel(imageGenerationSettings.selectedModel || IMAGE_GENERATION_MODELS[0].value)
+	}, [imageGenerationSettings.openRouterApiKey, imageGenerationSettings.selectedModel])
+
+	// Helper function to update settings
+	const updateSettings = (newApiKey: string, newModel: string) => {
 		const newSettings = {
-			openRouterApiKey,
-			selectedModel,
+			openRouterApiKey: newApiKey,
+			selectedModel: newModel,
 		}
-		setApiConfigurationField("openRouterImageGenerationSettings", newSettings)
-	}, [openRouterApiKey, selectedModel, setApiConfigurationField])
+		setApiConfigurationField("openRouterImageGenerationSettings", newSettings, true)
+	}
+
+	// Handle API key changes
+	const handleApiKeyChange = (value: string) => {
+		setOpenRouterApiKey(value)
+		updateSettings(value, selectedModel)
+	}
+
+	// Handle model selection changes
+	const handleModelChange = (value: string) => {
+		setSelectedModel(value)
+		updateSettings(openRouterApiKey, value)
+	}
 
 	return (
 		<div className="space-y-4">
@@ -66,7 +85,7 @@ export const ImageGenerationSettings = ({
 						</label>
 						<VSCodeTextField
 							value={openRouterApiKey}
-							onInput={(e: any) => setOpenRouterApiKey(e.target.value)}
+							onInput={(e: any) => handleApiKeyChange(e.target.value)}
 							placeholder={t("settings:experimental.IMAGE_GENERATION.openRouterApiKeyPlaceholder")}
 							className="w-full"
 							type="password"
@@ -90,10 +109,10 @@ export const ImageGenerationSettings = ({
 						</label>
 						<VSCodeDropdown
 							value={selectedModel}
-							onChange={(e: any) => setSelectedModel(e.target.value)}
+							onChange={(e: any) => handleModelChange(e.target.value)}
 							className="w-full">
 							{IMAGE_GENERATION_MODELS.map((model) => (
-								<VSCodeOption key={model.value} value={model.value}>
+								<VSCodeOption key={model.value} value={model.value} className="py-2 px-3">
 									{model.label}
 								</VSCodeOption>
 							))}

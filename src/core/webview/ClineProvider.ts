@@ -29,16 +29,17 @@ import {
 	type TerminalActionId,
 	type TerminalActionPromptType,
 	type HistoryItem,
-	type ClineAsk,
+	type CloudUserInfo,
 	RooCodeEventName,
 	requestyDefaultModelId,
 	openRouterDefaultModelId,
 	glamaDefaultModelId,
 	DEFAULT_TERMINAL_OUTPUT_CHARACTER_LIMIT,
 	DEFAULT_WRITE_DELAY_MS,
+	ORGANIZATION_ALLOW_ALL,
 } from "@roo-code/types"
 import { TelemetryService } from "@roo-code/telemetry"
-import { type CloudUserInfo, CloudService, ORGANIZATION_ALLOW_ALL, getRooCodeApiUrl } from "@roo-code/cloud"
+import { CloudService, BridgeOrchestrator, getRooCodeApiUrl } from "@roo-code/cloud"
 
 import { Package } from "../../shared/package"
 import { findLast } from "../../shared/array"
@@ -69,7 +70,6 @@ import { fileExistsAtPath } from "../../utils/fs"
 import { setTtsEnabled, setTtsSpeed } from "../../utils/tts"
 import { getWorkspaceGitInfo } from "../../utils/git"
 import { getWorkspacePath } from "../../utils/path"
-import { isRemoteControlEnabled } from "../../utils/remoteControl"
 
 import { setPanel } from "../../activate/registerCommands"
 
@@ -134,7 +134,6 @@ export class ClineProvider
 	) {
 		super()
 
-		this.log("ClineProvider instantiated")
 		ClineProvider.activeInstances.add(this)
 
 		this.mdmService = mdmService
@@ -167,6 +166,8 @@ export class ClineProvider
 
 		this.marketplaceManager = new MarketplaceManager(this.context, this.customModesManager)
 
+		// Forward <most> task events to the provider.
+		// We do something fairly similar for the IPC-based API.
 		this.taskCreationCallback = (instance: Task) => {
 			this.emit(RooCodeEventName.TaskCreated, instance)
 
@@ -302,11 +303,11 @@ export class ClineProvider
 
 	// Adds a new Task instance to clineStack, marking the start of a new task.
 	// The instance is pushed to the top of the stack (LIFO order).
-	// When the task is completed, the top instance is removed, reactivating the previous task.
+	// When the task is completed, the top instance is removed, reactivating the
+	// previous task.
 	async addClineToStack(task: Task) {
-		console.log(`[subtasks] adding task ${task.taskId}.${task.instanceId} to stack`)
-
-		// Add this cline instance into the stack that represents the order of all the called tasks.
+		// Add this cline instance into the stack that represents the order of
+		// all the called tasks.
 		this.clineStack.push(task)
 		task.emit(RooCodeEventName.TaskFocused)
 
@@ -350,7 +351,7 @@ export class ClineProvider
 		let task = this.clineStack.pop()
 
 		if (task) {
-			console.log(`[subtasks] removing task ${task.taskId}.${task.instanceId} from stack`)
+			task.emit(RooCodeEventName.TaskUnfocused)
 
 			try {
 				// Abort the running task and set isAbandoned to true so
@@ -358,11 +359,9 @@ export class ClineProvider
 				await task.abortTask(true)
 			} catch (e) {
 				this.log(
-					`[subtasks] encountered error while aborting task ${task.taskId}.${task.instanceId}: ${e.message}`,
+					`[ClineProvider#removeClineFromStack] abortTask() failed ${task.taskId}.${task.instanceId}: ${e.message}`,
 				)
 			}
-
-			task.emit(RooCodeEventName.TaskUnfocused)
 
 			// Remove event listeners before clearing the reference.
 			const cleanupFunctions = this.taskEventListeners.get(task)
@@ -384,6 +383,7 @@ export class ClineProvider
 		if (this.clineStack.length === 0) {
 			return undefined
 		}
+
 		return this.clineStack[this.clineStack.length - 1]
 	}
 
@@ -396,21 +396,18 @@ export class ClineProvider
 		return this.clineStack.map((cline) => cline.taskId)
 	}
 
-	// remove the current task/cline instance (at the top of the stack), so this task is finished
-	// and resume the previous task/cline instance (if it exists)
-	// this is used when a sub task is finished and the parent task needs to be resumed
+	// Remove the current task/cline instance (at the top of the stack), so this
+	// task is finished and resume the previous task/cline instance (if it
+	// exists).
+	// This is used when a subtask is finished and the parent task needs to be
+	// resumed.
 	async finishSubTask(lastMessage: string) {
-		console.log(`[subtasks] finishing subtask ${lastMessage}`)
-		// remove the last cline instance from the stack (this is the finished sub task)
+		// Remove the last cline instance from the stack (this is the finished
+		// subtask).
 		await this.removeClineFromStack()
-		// resume the last cline instance in the stack (if it exists - this is the 'parent' calling task)
+		// Resume the last cline instance in the stack (if it exists - this is
+		// the 'parent' calling task).
 		await this.getCurrentTask()?.resumePausedTask(lastMessage)
-	}
-
-	// Clear the current task without treating it as a subtask
-	// This is used when the user cancels a task that is not a subtask
-	async clearTask() {
-		await this.removeClineFromStack()
 	}
 
 	resumeTask(taskId: string): void {
@@ -623,8 +620,6 @@ export class ClineProvider
 	}
 
 	async resolveWebviewView(webviewView: vscode.WebviewView | vscode.WebviewPanel) {
-		this.log("Resolving webview view")
-
 		this.view = webviewView
 		const inTabMode = "onDidChangeViewState" in webviewView
 
@@ -743,8 +738,6 @@ export class ClineProvider
 
 		// If the extension is starting a new session, clear previous task state.
 		await this.removeClineFromStack()
-
-		this.log("Webview view resolved")
 	}
 
 	// When initializing a new task, (not from history but from a tool command
@@ -797,7 +790,7 @@ export class ClineProvider
 			parentTask,
 			taskNumber: this.clineStack.length + 1,
 			onCreated: this.taskCreationCallback,
-			enableTaskBridge: isRemoteControlEnabled(cloudUserInfo, remoteControlEnabled),
+			enableBridge: BridgeOrchestrator.isEnabled(cloudUserInfo, remoteControlEnabled),
 			initialTodos: options.initialTodos,
 			workspacePath: this.currentWorkspacePath,
 			...options,
@@ -806,7 +799,7 @@ export class ClineProvider
 		await this.addClineToStack(task)
 
 		this.log(
-			`[subtasks] ${task.parentTask ? "child" : "parent"} task ${task.taskId}.${task.instanceId} instantiated`,
+			`[createTask] ${task.parentTask ? "child" : "parent"} task ${task.taskId}.${task.instanceId} instantiated`,
 		)
 
 		return task
@@ -868,9 +861,6 @@ export class ClineProvider
 			remoteControlEnabled,
 		} = await this.getState()
 
-		// Determine if TaskBridge should be enabled
-		const enableTaskBridge = isRemoteControlEnabled(cloudUserInfo, remoteControlEnabled)
-
 		const task = new Task({
 			provider: this,
 			apiConfiguration,
@@ -885,13 +875,13 @@ export class ClineProvider
 			taskNumber: historyItem.number,
 			workspacePath: historyItem.workspace,
 			onCreated: this.taskCreationCallback,
-			enableTaskBridge,
+			enableBridge: BridgeOrchestrator.isEnabled(cloudUserInfo, remoteControlEnabled),
 		})
 
 		await this.addClineToStack(task)
 
 		this.log(
-			`[subtasks] ${task.parentTask ? "child" : "parent"} task ${task.taskId}.${task.instanceId} instantiated`,
+			`[createTaskWithHistoryItem] ${task.parentTask ? "child" : "parent"} task ${task.taskId}.${task.instanceId} instantiated`,
 		)
 
 		return task
@@ -1281,7 +1271,7 @@ export class ClineProvider
 			return
 		}
 
-		console.log(`[subtasks] cancelling task ${cline.taskId}.${cline.instanceId}`)
+		console.log(`[cancelTask] cancelling task ${cline.taskId}.${cline.instanceId}`)
 
 		const { historyItem } = await this.getTaskWithId(cline.taskId)
 		// Preserve parent and root task information for history item.
@@ -1315,6 +1305,16 @@ export class ClineProvider
 
 		// Clears task again, so we need to abortTask manually above.
 		await this.createTaskWithHistoryItem({ ...historyItem, rootTask, parentTask })
+	}
+
+	// Clear the current task without treating it as a subtask.
+	// This is used when the user cancels a task that is not a subtask.
+	async clearTask() {
+		if (this.clineStack.length > 0) {
+			const task = this.clineStack[this.clineStack.length - 1]
+			console.log(`[clearTask] clearing task ${task.taskId}.${task.instanceId}`)
+			await this.removeClineFromStack()
+		}
 	}
 
 	async updateCustomInstructions(instructions?: string) {
@@ -1600,6 +1600,7 @@ export class ClineProvider
 			})
 		} catch (error) {
 			console.error("Failed to fetch marketplace data:", error)
+
 			// Send empty data on error to prevent UI from hanging
 			this.postMessageToWebview({
 				type: "marketplaceData",
@@ -2216,56 +2217,49 @@ export class ClineProvider
 		return true
 	}
 
-	public async handleRemoteControlToggle(enabled: boolean) {
-		const { CloudService: CloudServiceImport, ExtensionBridgeService } = await import("@roo-code/cloud")
+	public async remoteControlEnabled(enabled: boolean) {
+		const userInfo = CloudService.instance.getUserInfo()
 
-		const userInfo = CloudServiceImport.instance.getUserInfo()
+		const config = await CloudService.instance.cloudAPI?.bridgeConfig().catch(() => undefined)
 
-		const bridgeConfig = await CloudServiceImport.instance.cloudAPI?.bridgeConfig().catch(() => undefined)
-
-		if (!bridgeConfig) {
-			this.log("[ClineProvider#handleRemoteControlToggle] Failed to get bridge config")
+		if (!config) {
+			this.log("[ClineProvider#remoteControlEnabled] Failed to get bridge config")
 			return
 		}
 
-		await ExtensionBridgeService.handleRemoteControlState(
-			userInfo,
-			enabled,
-			{ ...bridgeConfig, provider: this, sessionId: vscode.env.sessionId },
-			(message: string) => this.log(message),
-		)
+		await BridgeOrchestrator.connectOrDisconnect(userInfo, enabled, {
+			...config,
+			provider: this,
+			sessionId: vscode.env.sessionId,
+		})
 
-		if (isRemoteControlEnabled(userInfo, enabled)) {
+		const bridge = BridgeOrchestrator.getInstance()
+
+		if (bridge) {
 			const currentTask = this.getCurrentTask()
 
-			if (currentTask && !currentTask.bridgeService) {
+			if (currentTask && !currentTask.enableBridge) {
 				try {
-					currentTask.bridgeService = ExtensionBridgeService.getInstance()
-
-					if (currentTask.bridgeService) {
-						await currentTask.bridgeService.subscribeToTask(currentTask)
-					}
+					currentTask.enableBridge = true
+					await BridgeOrchestrator.subscribeToTask(currentTask)
 				} catch (error) {
-					const message = `[ClineProvider#handleRemoteControlToggle] subscribeToTask failed - ${error instanceof Error ? error.message : String(error)}`
+					const message = `[ClineProvider#remoteControlEnabled] BridgeOrchestrator.subscribeToTask() failed: ${error instanceof Error ? error.message : String(error)}`
 					this.log(message)
 					console.error(message)
 				}
 			}
 		} else {
 			for (const task of this.clineStack) {
-				if (task.bridgeService) {
+				if (task.enableBridge) {
 					try {
-						await task.bridgeService.unsubscribeFromTask(task.taskId)
-						task.bridgeService = null
+						await BridgeOrchestrator.getInstance()?.unsubscribeFromTask(task.taskId)
 					} catch (error) {
-						const message = `[ClineProvider#handleRemoteControlToggle] unsubscribeFromTask failed - ${error instanceof Error ? error.message : String(error)}`
+						const message = `[ClineProvider#remoteControlEnabled] BridgeOrchestrator#unsubscribeFromTask() failed: ${error instanceof Error ? error.message : String(error)}`
 						this.log(message)
 						console.error(message)
 					}
 				}
 			}
-
-			ExtensionBridgeService.resetInstance()
 		}
 	}
 
