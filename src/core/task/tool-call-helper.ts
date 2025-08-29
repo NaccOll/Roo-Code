@@ -7,6 +7,8 @@
 
 import Anthropic from "@anthropic-ai/sdk"
 import { ToolCallProviderType } from "../../shared/tools"
+import { getToolRegistry } from "../prompts/tools/schemas/tool-registry"
+import { type ToolName } from "@roo-code/types"
 
 /**
  * Defines the possible states of the JSON parser.
@@ -104,6 +106,8 @@ export class StreamingToolCallProcessor {
 	private processChunkOpenAIFormat(chunk: any): ToolCallParam {
 		let xmlOutput = ""
 		let index = 0
+		// Check if the tool name is valid using the tool registry
+		const toolRegistry = getToolRegistry()
 		for (const delta of chunk) {
 			index = delta.index || 0
 
@@ -128,20 +132,26 @@ export class StreamingToolCallProcessor {
 				toolCall.function.arguments += delta.function.arguments
 			}
 
-			// Output the opening function tag once the name is known.
-			if (toolCall.function.name && !state.functionNameOutputted) {
+			const isValidToolName =
+				toolCall.function.name && toolRegistry.isToolSupported(toolCall.function.name as ToolName)
+
+			// Output the opening function tag once the name is known and valid.
+			if (isValidToolName && !state.functionNameOutputted) {
 				xmlOutput += `<${toolCall.function.name}>`
 				state.functionNameOutputted = true
-			}
-
-			// Process the new arguments chunk.
-			if (toolCall.function.arguments.length > state.arguments.length) {
+				// When we first output the function name, also process any accumulated arguments
+				if (toolCall.function.arguments.length > 0) {
+					state.arguments = toolCall.function.arguments
+					xmlOutput += this.processArguments(state, toolCall.function.name)
+				}
+			} else if (state.functionNameOutputted && toolCall.function.arguments.length > state.arguments.length) {
+				// Process new arguments chunk only if we already have a valid function name
 				state.arguments = toolCall.function.arguments
 				xmlOutput += this.processArguments(state, toolCall.function.name)
 			}
 
 			// Check if the JSON is complete and close the function tag.
-			if (!state.functionClosed && state.bracketStack.length === 0 && state.cursor > 0) {
+			if (isValidToolName && !state.functionClosed && state.bracketStack.length === 0 && state.cursor > 0) {
 				// A simple check to see if we've reached a terminal state.
 				// A more robust check might be necessary for edge cases.
 				const remaining = state.arguments.substring(state.cursor).trim()
@@ -153,15 +163,32 @@ export class StreamingToolCallProcessor {
 		}
 		// the index of GPT-5 tool_call not start by 0
 		const toolCall = this.accumulatedToolCalls[index]
+		const isValidToolName =
+			toolCall?.function?.name && toolRegistry.isToolSupported(toolCall.function.name as ToolName)
+
 		const result: ToolCallParam = {
 			providerType: "openai",
-			toolName: toolCall?.function?.name,
-			toolUserId: toolCall.id || undefined,
+			toolName: isValidToolName ? toolCall.function.name : "",
+			toolUserId: toolCall?.id || undefined,
 			chunkContent: xmlOutput,
 			originContent: this.accumulatedToolCalls,
 		}
 
-		if (this.processingStates.get(index)?.functionClosed) {
+		// Provide a temporary anthropicContent (input) during streaming before final closure
+		const currentState = this.processingStates.get(index)
+		if (currentState && !currentState.functionClosed && isValidToolName) {
+			const tmpInput = this.tryBuildTemporaryJson(currentState, toolCall.function.arguments)
+			if (tmpInput != null) {
+				result.anthropicContent = {
+					id: result.toolUserId,
+					name: result.toolName,
+					input: tmpInput,
+					type: "tool_use",
+				}
+			}
+		}
+
+		if (this.processingStates.get(index)?.functionClosed && isValidToolName) {
 			let input
 			try {
 				input = JSON.parse(toolCall.function.arguments)
@@ -184,11 +211,21 @@ export class StreamingToolCallProcessor {
 	 */
 	public finalize(): string {
 		let finalXml = ""
+		const toolRegistry = getToolRegistry()
+
 		for (let i = 0; i < this.accumulatedToolCalls.length; i++) {
 			const state = this.processingStates.get(i)
 			const toolCall = this.accumulatedToolCalls[i]
 
 			if (!state || !toolCall || state.functionClosed) {
+				continue
+			}
+
+			// Check if the tool name is valid
+			const isValidToolName =
+				toolCall.function.name && toolRegistry.isToolSupported(toolCall.function.name as ToolName)
+
+			if (!isValidToolName) {
 				continue
 			}
 
@@ -482,6 +519,120 @@ export class StreamingToolCallProcessor {
 		}
 		// For simple escapes like \n, \", \\, etc.
 		return str.substring(pos, pos + 2)
+	}
+
+	/**
+	 * Attempts to construct a temporarily valid JSON string from the current streaming buffer and parser state,
+	 * allowing JSON.parse to succeed and provide a usable anthropicContent.input during partial tool call streaming.
+	 * This function does NOT mutate the original parser state; it operates only on copies.
+	 *
+	 * Implementation details:
+	 * - If currently parsing a string, closes the string with a quote and removes incomplete escape/unicode sequences.
+	 * - If a primitive value (true/false/null/number) is incomplete, auto-completes it to a valid JSON token.
+	 * - Closes all unclosed object/array brackets, inserting "null" where a value is expected.
+	 * - Removes trailing commas before closing brackets to avoid JSON syntax errors.
+	 * - On initial parse failure, tries to append "null" or repeatedly trim trailing commas and retries parsing.
+	 * - Only used for constructing intermediate JSON during streaming; final result should use fully parsed content.
+	 */
+	private tryBuildTemporaryJson(state: ToolCallProcessingState, rawArgs: string): any | null {
+		let s = rawArgs
+
+		if (!s || s.trim().length === 0) {
+			return null
+		}
+
+		const trimTrailingComma = (str: string): string => str.replace(/,(\s*)$/, "$1")
+
+		const completePrimitiveSuffix = (pb: string): string => {
+			// Complete booleans/null prefixes
+			if (/^(t|tr|tru)$/.test(pb)) return "e" // true
+			if (/^(f|fa|fal|fals)$/.test(pb)) return "e" // false
+			if (/^(n|nu|nul)$/.test(pb)) return "l" // null
+			// Complete numeric partials like "-" or "12."
+			if (/^-?$/.test(pb)) return "0"
+			if (/^-?\d+\.$/.test(pb)) return "0"
+			return ""
+		}
+
+		const stripIncompleteUnicodeAtEnd = (input: string): string => {
+			const uniIndex = input.lastIndexOf("\\u")
+			if (uniIndex !== -1) {
+				const tail = input.slice(uniIndex + 2)
+				if (!/^[0-9a-fA-F]{4}$/.test(tail)) {
+					return input.slice(uniIndex) ? input.slice(0, uniIndex) : input
+				}
+			}
+			return input
+		}
+
+		// 1) Handle in-flight strings
+		if (state.inString) {
+			// Drop dangling backslash to avoid invalid escape at buffer end
+			if (s.endsWith("\\")) s = s.slice(0, -1)
+			// Trim incomplete unicode escape (e.g. \u12)
+			s = stripIncompleteUnicodeAtEnd(s)
+			// Close the string
+			s += `"`
+		} else {
+			// 2) Not inside a string; if a primitive token is partially accumulated, try to complete it minimally
+			if (state.primitiveBuffer && state.primitiveBuffer.length > 0) {
+				const suffix = completePrimitiveSuffix(state.primitiveBuffer)
+				if (suffix) s += suffix
+			}
+		}
+
+		// 3) Before closing brackets, remove trailing commas to avoid JSON syntax errors
+		s = trimTrailingComma(s)
+
+		// 4) Close any open objects/arrays per the current stack
+		if (state.bracketStack.length > 0) {
+			for (let i = state.bracketStack.length - 1; i >= 0; i--) {
+				// Always ensure no trailing comma before we append a closer
+				s = trimTrailingComma(s)
+
+				const b = state.bracketStack[i]
+
+				s += b === "{" ? "}" : "]"
+			}
+		}
+
+		// 5) First parse attempt
+		try {
+			return JSON.parse(s)
+		} catch {
+			// 6) Second attempt: add one more null if still dangling and retry
+			try {
+				let s2 = s
+				const lastNonWs = this.findLastNonWhitespaceChar(s2)
+				if (lastNonWs === ":" || state.parserState === ParserState.EXPECT_VALUE) {
+					s2 += "null"
+				}
+				s2 = trimTrailingComma(s2)
+				return JSON.parse(s2)
+			} catch {
+				// 7) Final fallback: repeatedly trim trailing commas and retry
+				let s3 = s
+				for (let k = 0; k < 3; k++) {
+					const trimmed = trimTrailingComma(s3)
+					if (trimmed === s3) break
+					s3 = trimmed
+					try {
+						return JSON.parse(s3)
+					} catch {
+						// continue
+					}
+				}
+				return null
+			}
+		}
+	}
+
+	private findLastNonWhitespaceChar(str: string): string {
+		for (let i = str.length - 1; i >= 0; i--) {
+			const ch = str[i]
+			if (!/\s/.test(ch)) return ch
+		}
+		return ""
 	}
 
 	private onOpenTag(tag: string, toolName: string): string {

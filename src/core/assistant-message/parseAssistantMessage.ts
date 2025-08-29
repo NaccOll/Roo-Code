@@ -21,7 +21,10 @@ export function parseAssistantMessage(
 	for (let i = 0; i < assistantMessage.length; i++) {
 		const char = assistantMessage[i]
 		accumulator += char
-
+		// During streaming, opportunistically attach temporary toolUseParam (if available)
+		if (currentToolUse && toolCallParam?.anthropicContent) {
+			currentToolUse.toolUseParam = toolCallParam.anthropicContent
+		}
 		// There should not be a param without a tool use.
 		if (currentToolUse && currentParamName) {
 			const currentParamValue = accumulator.slice(currentParamValueStartIndex)

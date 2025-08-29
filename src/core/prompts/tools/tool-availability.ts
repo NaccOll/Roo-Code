@@ -74,6 +74,11 @@ export function getToolAvailability(args: ToolAvailabilityArgs): ToolAvailabilit
 		tools.delete("update_todo_list")
 	}
 
+	// Conditionally exclude generate_image if experiment is not enabled
+	if (!experiments?.imageGeneration) {
+		tools.delete("generate_image")
+	}
+
 	const availableTools = Array.from(tools)
 
 	// Determine which tools should use tool calls vs XML
