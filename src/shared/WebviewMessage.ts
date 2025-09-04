@@ -276,6 +276,8 @@ export interface WebviewMessage {
 			| "gemini"
 			| "mistral"
 			| "vercel-ai-gateway"
+		codebaseIndexVectorStoreProvider?: "local" | "qdrant"
+		codebaseIndexLocalVectorStoreDirectory?: string
 		codebaseIndexEmbedderBaseUrl?: string
 		codebaseIndexEmbedderModelId: string
 		codebaseIndexEmbedderModelDimension?: number // Generic dimension for all providers
