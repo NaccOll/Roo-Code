@@ -12,6 +12,8 @@ import { getDefaultModelId, getModelDimension, getModelScoreThreshold } from "..
 export class CodeIndexConfigManager {
 	private codebaseIndexEnabled: boolean = true
 	private embedderProvider: EmbedderProvider = "openai"
+	private vectorStoreProvider: "local" | "qdrant" = "qdrant"
+	private localVectorStoreDirectory?: string
 	private modelId?: string
 	private modelDimension?: number
 	private openAiOptions?: ApiHandlerOptions
@@ -47,10 +49,16 @@ export class CodeIndexConfigManager {
 			codebaseIndexEnabled: true,
 			codebaseIndexQdrantUrl: "http://localhost:6333",
 			codebaseIndexEmbedderProvider: "openai",
+			codebaseIndexVectorStoreProvider: "qdrant",
+			codebaseIndexLocalVectorStoreDirectory: undefined,
 			codebaseIndexEmbedderBaseUrl: "",
 			codebaseIndexEmbedderModelId: "",
+			codebaseIndexEmbedderModelDimension: undefined,
 			codebaseIndexSearchMinScore: undefined,
 			codebaseIndexSearchMaxResults: undefined,
+			codebaseIndexOpenAiCompatibleBaseUrl: "",
+			codebaseIndexOpenAiCompatibleApiKey: "",
+			codebaseIndexGeminiApiKey: "",
 		}
 
 		const {
@@ -59,9 +67,11 @@ export class CodeIndexConfigManager {
 			codebaseIndexEmbedderProvider,
 			codebaseIndexEmbedderBaseUrl,
 			codebaseIndexEmbedderModelId,
+			codebaseIndexLocalVectorStoreDirectory,
 			codebaseIndexSearchMinScore,
 			codebaseIndexSearchMaxResults,
 		} = codebaseIndexConfig
+		const codebaseIndexVectorStoreProvider = codebaseIndexConfig.codebaseIndexVectorStoreProvider ?? "qdrant"
 
 		const openAiKey = this.contextProxy?.getSecret("codeIndexOpenAiKey") ?? ""
 		const qdrantApiKey = this.contextProxy?.getSecret("codeIndexQdrantApiKey") ?? ""
@@ -74,6 +84,8 @@ export class CodeIndexConfigManager {
 
 		// Update instance variables with configuration
 		this.codebaseIndexEnabled = codebaseIndexEnabled ?? true
+		this.vectorStoreProvider = codebaseIndexVectorStoreProvider ?? "qdrant"
+		this.localVectorStoreDirectory = codebaseIndexLocalVectorStoreDirectory
 		this.qdrantUrl = codebaseIndexQdrantUrl
 		this.qdrantApiKey = qdrantApiKey ?? ""
 		this.searchMinScore = codebaseIndexSearchMinScore
@@ -158,6 +170,8 @@ export class CodeIndexConfigManager {
 			enabled: this.codebaseIndexEnabled,
 			configured: this.isConfigured(),
 			embedderProvider: this.embedderProvider,
+			vectorStoreProvider: this.vectorStoreProvider,
+			localVectorStoreDirectory: this.localVectorStoreDirectory,
 			modelId: this.modelId,
 			modelDimension: this.modelDimension,
 			openAiKey: this.openAiOptions?.openAiNativeApiKey ?? "",
@@ -271,6 +285,8 @@ export class CodeIndexConfigManager {
 		const prevVercelAiGatewayApiKey = prev?.vercelAiGatewayApiKey ?? ""
 		const prevQdrantUrl = prev?.qdrantUrl ?? ""
 		const prevQdrantApiKey = prev?.qdrantApiKey ?? ""
+		const prevVectorStoreProvider = prev?.vectorStoreProvider ?? "qdrant"
+		const prevLocalDbPath = prev?.localVectorStoreDirectory ?? ""
 
 		// 1. Transition from disabled/unconfigured to enabled/configured
 		if ((!prevEnabled || !prevConfigured) && this.codebaseIndexEnabled && nowConfigured) {
@@ -298,6 +314,16 @@ export class CodeIndexConfigManager {
 			return true
 		}
 
+		// Vector store provider change
+		if (prevVectorStoreProvider !== this.vectorStoreProvider) {
+			return true
+		}
+
+		// Local DB path change (only affects local vector store)
+		if (this.vectorStoreProvider === "local" && prevLocalDbPath !== (this.localVectorStoreDirectory ?? "")) {
+			return true
+		}
+
 		// Authentication changes (API keys)
 		const currentOpenAiKey = this.openAiOptions?.openAiNativeApiKey ?? ""
 		const currentOllamaBaseUrl = this.ollamaOptions?.ollamaBaseUrl ?? ""
@@ -309,6 +335,7 @@ export class CodeIndexConfigManager {
 		const currentVercelAiGatewayApiKey = this.vercelAiGatewayOptions?.apiKey ?? ""
 		const currentQdrantUrl = this.qdrantUrl ?? ""
 		const currentQdrantApiKey = this.qdrantApiKey ?? ""
+		const currentLocalDbPath = this.localVectorStoreDirectory ?? ""
 
 		if (prevOpenAiKey !== currentOpenAiKey) {
 			return true
@@ -343,6 +370,11 @@ export class CodeIndexConfigManager {
 		}
 
 		if (prevQdrantUrl !== currentQdrantUrl || prevQdrantApiKey !== currentQdrantApiKey) {
+			return true
+		}
+
+		// Check for local database path changes (affects local vector store)
+		if (prevLocalDbPath !== currentLocalDbPath) {
 			return true
 		}
 
@@ -387,6 +419,8 @@ export class CodeIndexConfigManager {
 		return {
 			isConfigured: this.isConfigured(),
 			embedderProvider: this.embedderProvider,
+			vectorStoreProvider: this.vectorStoreProvider ?? "qdrant",
+			localVectorStoreDirectoryPlaceholder: this.localVectorStoreDirectory,
 			modelId: this.modelId,
 			modelDimension: this.modelDimension,
 			openAiOptions: this.openAiOptions,
@@ -479,5 +513,12 @@ export class CodeIndexConfigManager {
 	 */
 	public get currentSearchMaxResults(): number {
 		return this.searchMaxResults ?? DEFAULT_MAX_SEARCH_RESULTS
+	}
+
+	/**
+	 * Gets the current local database path for vector storage
+	 */
+	public get currentLocalDbPath(): string | undefined {
+		return this.localVectorStoreDirectory
 	}
 }
