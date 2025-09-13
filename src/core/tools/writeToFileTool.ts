@@ -313,6 +313,9 @@ export async function writeToFileTool(
 
 			await cline.diffViewProvider.reset()
 
+			// Process any queued messages after file edit completes
+			cline.processQueuedMessages()
+
 			return
 		}
 	} catch (error) {
