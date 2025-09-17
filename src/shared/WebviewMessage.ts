@@ -101,6 +101,7 @@ export interface WebviewMessage {
 		| "systemNotificationsEnabled"
 		| "diffEnabled"
 		| "enableCheckpoints"
+		| "checkpointTimeout"
 		| "browserViewportSize"
 		| "screenshotQuality"
 		| "remoteBrowserHost"

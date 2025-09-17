@@ -87,6 +87,8 @@ export interface ExtensionStateContextType extends ExtensionState {
 	setSystemNotificationsEnabled: (value: boolean) => void
 	setDiffEnabled: (value: boolean) => void
 	setEnableCheckpoints: (value: boolean) => void
+	checkpointTimeout: number
+	setCheckpointTimeout: (value: number) => void
 	setBrowserViewportSize: (value: string) => void
 	setFuzzyMatchThreshold: (value: number) => void
 	setWriteDelayMs: (value: number) => void
@@ -195,6 +197,7 @@ export const ExtensionStateContextProvider: React.FC<{ children: React.ReactNode
 		ttsSpeed: 1.0,
 		diffEnabled: false,
 		enableCheckpoints: true,
+		checkpointTimeout: 15, // Default to 15 seconds
 		fuzzyMatchThreshold: 1.0,
 		language: "en", // Default language code
 		writeDelayMs: 1000,
@@ -459,6 +462,7 @@ export const ExtensionStateContextProvider: React.FC<{ children: React.ReactNode
 			setState((prevState) => ({ ...prevState, systemNotificationsEnabled: value })),
 		setDiffEnabled: (value) => setState((prevState) => ({ ...prevState, diffEnabled: value })),
 		setEnableCheckpoints: (value) => setState((prevState) => ({ ...prevState, enableCheckpoints: value })),
+		setCheckpointTimeout: (value) => setState((prevState) => ({ ...prevState, checkpointTimeout: value })),
 		setBrowserViewportSize: (value: string) =>
 			setState((prevState) => ({ ...prevState, browserViewportSize: value })),
 		setFuzzyMatchThreshold: (value) => setState((prevState) => ({ ...prevState, fuzzyMatchThreshold: value })),
