@@ -24,7 +24,9 @@
 		"connectToCloudDescription": "Sign in to Roo Code Cloud to share tasks",
 		"sharingDisabledByOrganization": "Sharing disabled by organization",
 		"shareSuccessOrganization": "Organization link copied to clipboard",
-		"shareSuccessPublic": "Public link copied to clipboard"
+		"shareSuccessPublic": "Public link copied to clipboard",
+		"openInCloud": "Open task in Roo Code Cloud",
+		"openInCloudIntro": "Keep monitoring or interacting with Roo from anywhere. Scan, click or copy to open."
 	},
 	"unpin": "Unpin",
 	"pin": "Pin",
@@ -269,21 +271,29 @@
 		"issues": "It seems like you're having Windows PowerShell issues, please see this"
 	},
 	"autoApprove": {
-		"title": "Auto-approve:",
+		"tooltipManage": "Manage auto-approval settings",
+		"tooltipStatus": "Auto-approval enabled for: {{toggles}}",
+		"title": "Auto-approve",
+		"all": "All",
 		"none": "None",
-		"description": "Auto-approve allows Roo Code to perform actions without asking for permission. Only enable for actions you fully trust. More detailed configuration available in <settingsLink>Settings</settingsLink>.",
+		"description": "Run these actions without asking for permission. Only enable for actions you fully trust.",
 		"selectOptionsFirst": "Select at least one option below to enable auto-approval",
 		"toggleAriaLabel": "Toggle auto-approval",
-		"disabledAriaLabel": "Auto-approval disabled - select options first"
+		"disabledAriaLabel": "Auto-approval disabled - select options first",
+		"triggerLabelOff": "Auto-approve off",
+		"triggerLabel_zero": "0 auto-approve",
+		"triggerLabel_one": "1 auto-approved",
+		"triggerLabel_other": "{{count}} auto-approved",
+		"triggerLabelAll": "YOLO"
 	},
 	"announcement": {
 		"title": "🎉 Roo Code {{version}} Released",
-		"stealthModel": {
-			"feature": "The Sonic stealth model is now <bold>Grok Code Fast</bold>! This high-performance reasoning model is available as <code>grok-code-fast-1</code> under the <bold>xAI (Grok)</bold> provider.",
-			"note": "As a thank you for all the helpful feedback on Sonic, xAI is extending free access to <code>grok-code-fast-1</code> for another week through the <bold>Roo Code Cloud</bold> provider.",
-			"connectButton": "Connect to Roo Code Cloud",
-			"selectModel": "Visit <settingsLink>Settings</settingsLink> to update your provider configuration."
-		}
+		"description": "Introducing <bold>Roo Code Cloud:</bold> Bringing the power of Roo beyond the IDE",
+		"feature1": "<bold>Track task progress from anywhere (Free):</bold> Get real-time updates on long-running tasks without being stuck in your IDE",
+		"feature2": "<bold>Control the Roo Extension remotely (Pro):</bold> Start, stop, and interact with tasks from a chat-based browser interface.",
+		"learnMore": "Ready to take control? Learn more <learnMoreLink>here</learnMoreLink>.",
+		"visitCloudButton": "Visit Roo Code Cloud",
+		"socialLinks": "Join us on <xLink>X</xLink>, <discordLink>Discord</discordLink>, or <redditLink>r/RooCode</redditLink>"
 	},
 	"reasoning": {
 		"thinking": "Thinking",
@@ -361,6 +371,7 @@
 		"tooltip": "Manage slash commands",
 		"title": "Slash Commands",
 		"description": "Use built-in slash commands or create custom ones for quick access to frequently used prompts and workflows. <DocsLink>Docs</DocsLink>",
+		"manageCommands": "Manage slash commands in settings",
 		"builtInCommands": "Built-in Commands",
 		"globalCommands": "Global Commands",
 		"workspaceCommands": "Workspace Commands",
@@ -383,5 +394,11 @@
 	"queuedMessages": {
 		"title": "Queued Messages:",
 		"clickToEdit": "Click to edit message"
+	},
+	"contextMenu": {
+		"noResults": "No results",
+		"problems": "Problems",
+		"terminal": "Terminal",
+		"url": "Paste URL to fetch contents"
 	}
 }
