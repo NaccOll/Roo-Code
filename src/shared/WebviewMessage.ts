@@ -183,6 +183,7 @@ export interface WebviewMessage {
 		| "hasOpenedModeSelector"
 		| "cloudButtonClicked"
 		| "rooCloudSignIn"
+		| "cloudLandingPageSignIn"
 		| "rooCloudSignOut"
 		| "rooCloudManualUrl"
 		| "condenseTaskContextRequest"
