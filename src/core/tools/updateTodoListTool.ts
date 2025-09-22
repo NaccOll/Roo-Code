@@ -108,6 +108,7 @@ export function parseMarkdownChecklist(md: string): TodoItem[] {
 		.filter(Boolean)
 	const todos: TodoItem[] = []
 	for (const line of lines) {
+		// Support both "[ ] Task" and "- [ ] Task" formats
 		const match = line.match(/^(?:-\s*)?\[\s*([ xX\-~])\s*\]\s+(.+)$/)
 		if (!match) continue
 		let status: TodoStatus = "pending"
