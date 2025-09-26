@@ -222,6 +222,9 @@
 	},
 	"response": "응답",
 	"arguments": "인수",
+	"text": {
+		"rooSaid": "루가 말했다"
+	},
 	"feedback": {
 		"youSaid": "당신은 말했다"
 	},
@@ -255,6 +258,7 @@
 		"tooltipManage": "자동 승인 설정 관리",
 		"tooltipStatus": "자동 승인 활성화됨: {{toggles}}",
 		"title": "자동 승인",
+		"toggle": "자동 승인 전환",
 		"all": "모두",
 		"none": "없음",
 		"description": "허가 없이 이러한 작업을 실행합니다. 전적으로 신뢰하는 작업에 대해서만 활성화하십시오.",
@@ -319,8 +323,6 @@
 		"tooltips": {
 			"expand": "코드 블록 확장",
 			"collapse": "코드 블록 축소",
-			"enable_wrap": "자동 줄바꿈 활성화",
-			"disable_wrap": "자동 줄바꿈 비활성화",
 			"copy_code": "코드 복사"
 		}
 	},

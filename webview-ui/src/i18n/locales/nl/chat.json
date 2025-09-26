@@ -217,6 +217,9 @@
 	},
 	"response": "Antwoord",
 	"arguments": "Argumenten",
+	"text": {
+		"rooSaid": "Roo zei"
+	},
 	"feedback": {
 		"youSaid": "Jij zei"
 	},
@@ -255,6 +258,7 @@
 		"tooltipManage": "Beheer instellingen voor automatische goedkeuring",
 		"tooltipStatus": "Automatische goedkeuring ingeschakeld voor: {{toggles}}",
 		"title": "Automatisch goedkeuren",
+		"toggle": "Automatisch goedkeuren in-/uitschakelen",
 		"all": "Alles",
 		"none": "Geen",
 		"description": "Voer deze acties uit zonder om toestemming te vragen. Schakel dit alleen in voor acties die je volledig vertrouwt.",
@@ -319,8 +323,6 @@
 		"tooltips": {
 			"expand": "Codeblok uitvouwen",
 			"collapse": "Codeblok samenvouwen",
-			"enable_wrap": "Regelafbreking inschakelen",
-			"disable_wrap": "Regelafbreking uitschakelen",
 			"copy_code": "Code kopiëren"
 		}
 	},

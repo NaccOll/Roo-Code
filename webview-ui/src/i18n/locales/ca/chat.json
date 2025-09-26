@@ -222,6 +222,9 @@
 	},
 	"response": "Resposta",
 	"arguments": "Arguments",
+	"text": {
+		"rooSaid": "En Roo ha dit"
+	},
 	"feedback": {
 		"youSaid": "Has dit"
 	},
@@ -255,6 +258,7 @@
 		"tooltipManage": "Gestiona la configuració d'aprovació automàtica",
 		"tooltipStatus": "Aprovació automàtica activada per a: {{toggles}}",
 		"title": "Aprovació automàtica",
+		"toggle": "Commuta l'aprovació automàtica",
 		"all": "Tot",
 		"none": "Cap",
 		"description": "Executa aquestes accions sense demanar permís. Activa-ho només per a accions de confiança.",
@@ -319,8 +323,6 @@
 		"tooltips": {
 			"expand": "Expandir bloc de codi",
 			"collapse": "Contraure bloc de codi",
-			"enable_wrap": "Activar ajustament de línia",
-			"disable_wrap": "Desactivar ajustament de línia",
 			"copy_code": "Copiar codi"
 		}
 	},

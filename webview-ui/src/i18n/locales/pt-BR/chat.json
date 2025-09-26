@@ -222,6 +222,9 @@
 	},
 	"response": "Resposta",
 	"arguments": "Argumentos",
+	"text": {
+		"rooSaid": "Roo disse"
+	},
 	"feedback": {
 		"youSaid": "Você disse"
 	},
@@ -255,6 +258,7 @@
 		"tooltipManage": "Gerenciar configurações de aprovação automática",
 		"tooltipStatus": "Aprovação automática habilitada para: {{toggles}}",
 		"title": "Aprovação automática",
+		"toggle": "Alternar aprovação automática",
 		"all": "Todos",
 		"none": "Nenhum",
 		"description": "Execute estas ações sem pedir permissão. Ative isso apenas para ações em que você confia totalmente.",
@@ -319,8 +323,6 @@
 		"tooltips": {
 			"expand": "Expandir bloco de código",
 			"collapse": "Recolher bloco de código",
-			"enable_wrap": "Ativar quebra de linha",
-			"disable_wrap": "Desativar quebra de linha",
 			"copy_code": "Copiar código"
 		}
 	},

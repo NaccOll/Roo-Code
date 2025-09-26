@@ -244,6 +244,9 @@
 	},
 	"response": "Respons",
 	"arguments": "Argumen",
+	"text": {
+		"rooSaid": "Roo berkata"
+	},
 	"feedback": {
 		"youSaid": "Anda bilang"
 	},
@@ -282,6 +285,7 @@
 		"tooltipManage": "Kelola pengaturan persetujuan otomatis",
 		"tooltipStatus": "Persetujuan otomatis diaktifkan untuk: {{toggles}}",
 		"title": "Setujui Otomatis",
+		"toggle": "Beralih persetujuan otomatis",
 		"all": "Semua",
 		"none": "Tidak ada",
 		"description": "Jalankan tindakan ini tanpa meminta izin. Hanya aktifkan untuk tindakan yang Anda percayai sepenuhnya.",
@@ -340,8 +344,6 @@
 		"tooltips": {
 			"expand": "Perluas blok kode",
 			"collapse": "Tutup blok kode",
-			"enable_wrap": "Aktifkan word wrap",
-			"disable_wrap": "Nonaktifkan word wrap",
 			"copy_code": "Salin kode"
 		}
 	},

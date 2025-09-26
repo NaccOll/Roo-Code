@@ -2,7 +2,7 @@ import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from "
 import { useSize } from "react-use"
 import { useTranslation, Trans } from "react-i18next"
 import deepEqual from "fast-deep-equal"
-import { VSCodeBadge, VSCodeButton } from "@vscode/webview-ui-toolkit/react"
+import { VSCodeBadge } from "@vscode/webview-ui-toolkit/react"
 
 import type { ClineMessage, FollowUpData, SuggestionItem } from "@roo-code/types"
 import { Mode } from "@roo/modes"
@@ -16,7 +16,6 @@ import { findMatchingResourceOrTemplate } from "@src/utils/mcp"
 import { vscode } from "@src/utils/vscode"
 import { removeLeadingNonAlphanumeric } from "@src/utils/removeLeadingNonAlphanumeric"
 import { getLanguageFromPath } from "@src/utils/getLanguageFromPath"
-import { StandardTooltip } from "@src/components/ui"
 
 import { ToolUseBlock, ToolUseBlockHeader } from "../common/ToolUseBlock"
 import UpdateTodoListToolBlock from "./UpdateTodoListToolBlock"
@@ -61,6 +60,7 @@ import {
 	PocketKnife,
 	FolderTree,
 	TerminalSquare,
+	MessageCircle,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -130,7 +130,6 @@ export const ChatRowContent = ({
 	onBatchFileResponse,
 	isFollowUpAnswered,
 	editable,
-	hasCheckpoint,
 }: ChatRowContentProps) => {
 	const { t } = useTranslation()
 
@@ -986,25 +985,6 @@ export const ChatRowContent = ({
 		}
 	}
 
-	const viewFullDiffBtn =
-		hasCheckpoint && isLast && !isStreaming ? (
-			<div style={{ marginTop: 16, display: "flex", justifyContent: "flex-start" }}>
-				<StandardTooltip content={t("chat:checkpoint.menu.viewDiffFromInit")}>
-					<VSCodeButton
-						appearance="primary"
-						className="flex-1 mr-[6px]"
-						onClick={() =>
-							vscode.postMessage({
-								type: "checkpointDiff",
-								payload: { mode: "full", commitHash: "" },
-							})
-						}>
-						{t("chat:checkpoint.menu.viewDiffFromInit")}
-					</VSCodeButton>
-				</StandardTooltip>
-			</div>
-		) : null
-
 	switch (message.type) {
 		case "say":
 			switch (message.say) {
@@ -1140,14 +1120,20 @@ export const ChatRowContent = ({
 				case "text":
 					return (
 						<div>
-							<Markdown markdown={message.text} partial={message.partial} />
-							{message.images && message.images.length > 0 && (
-								<div style={{ marginTop: "10px" }}>
-									{message.images.map((image, index) => (
-										<ImageBlock key={index} imageData={image} />
-									))}
-								</div>
-							)}
+							<div style={headerStyle}>
+								<MessageCircle className="w-4" aria-label="Speech bubble icon" />
+								<span style={{ fontWeight: "bold" }}>{t("chat:text.rooSaid")}</span>
+							</div>
+							<div className="pl-6">
+								<Markdown markdown={message.text} partial={message.partial} />
+								{message.images && message.images.length > 0 && (
+									<div style={{ marginTop: "10px" }}>
+										{message.images.map((image, index) => (
+											<ImageBlock key={index} imageData={image} />
+										))}
+									</div>
+								)}
+							</div>
 						</div>
 					)
 				case "user_feedback":
@@ -1249,7 +1235,6 @@ export const ChatRowContent = ({
 							</div>
 							<div className="border-l border-green-600/30 ml-2 pl-4 pb-1">
 								<Markdown markdown={message.text} />
-								{viewFullDiffBtn}
 							</div>
 						</>
 					)
@@ -1490,7 +1475,6 @@ export const ChatRowContent = ({
 								</div>
 								<div style={{ color: "var(--vscode-charts-green)", paddingTop: 10 }}>
 									<Markdown markdown={message.text} partial={message.partial} />
-									{viewFullDiffBtn}
 								</div>
 							</div>
 						)

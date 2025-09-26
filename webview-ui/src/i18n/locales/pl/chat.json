@@ -222,6 +222,9 @@
 	},
 	"response": "Odpowiedź",
 	"arguments": "Argumenty",
+	"text": {
+		"rooSaid": "Roo powiedział"
+	},
 	"feedback": {
 		"youSaid": "Powiedziałeś"
 	},
@@ -255,6 +258,7 @@
 		"tooltipManage": "Zarządzaj ustawieniami automatycznego zatwierdzania",
 		"tooltipStatus": "Automatyczne zatwierdzanie włączone dla: {{toggles}}",
 		"title": "Automatyczne zatwierdzanie",
+		"toggle": "Przełącz automatyczne zatwierdzanie",
 		"all": "Wszystkie",
 		"none": "Żadne",
 		"description": "Wykonuj te działania bez pytania o zgodę. Włącz tę opcję tylko dla działań, którym w pełni ufasz.",
@@ -319,8 +323,6 @@
 		"tooltips": {
 			"expand": "Rozwiń blok kodu",
 			"collapse": "Zwiń blok kodu",
-			"enable_wrap": "Włącz zawijanie wierszy",
-			"disable_wrap": "Wyłącz zawijanie wierszy",
 			"copy_code": "Kopiuj kod"
 		}
 	},

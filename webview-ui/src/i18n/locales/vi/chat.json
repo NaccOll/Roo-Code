@@ -223,6 +223,9 @@
 	},
 	"response": "Phản hồi",
 	"arguments": "Tham số",
+	"text": {
+		"rooSaid": "Roo đã nói"
+	},
 	"feedback": {
 		"youSaid": "Bạn đã nói"
 	},
@@ -256,6 +259,7 @@
 		"tooltipManage": "Quản lý cài đặt tự động phê duyệt",
 		"tooltipStatus": "Tự động phê duyệt được bật cho: {{toggles}}",
 		"title": "Tự động phê duyệt",
+		"toggle": "Bật/tắt tự động phê duyệt",
 		"all": "Tất cả",
 		"none": "Không có",
 		"description": "Thực hiện các hành động này mà không cần xin phép. Chỉ bật tính năng này cho các hành động bạn hoàn toàn tin tưởng.",
@@ -320,8 +324,6 @@
 		"tooltips": {
 			"expand": "Mở rộng khối mã",
 			"collapse": "Thu gọn khối mã",
-			"enable_wrap": "Bật tự động xuống dòng",
-			"disable_wrap": "Tắt tự động xuống dòng",
 			"copy_code": "Sao chép mã"
 		}
 	},
