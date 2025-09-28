@@ -17,7 +17,7 @@ export function getToolUseGuidelinesSection(
 
 	// First guideline is always the same
 	guidelinesList.push(
-		`${itemNumber++}. In <thinking> tags, assess what information you already have and what information you need to proceed with the task.`,
+		`${itemNumber++}. Assess what information you already have and what information you need to proceed with the task.`,
 	)
 
 	// Conditional codebase search guideline
