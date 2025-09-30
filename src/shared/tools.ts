@@ -85,7 +85,7 @@ export const supportToolCall = (provider: string | null | undefined) => {
 	if (provider === null || provider === undefined) {
 		return false
 	}
-	return ["openrouter", "openai", "deepseek", "lmstudio", "roo"].includes(provider)
+	return ["openrouter", "openai", "deepseek", "copilot", "lmstudio", "roo"].includes(provider)
 }
 
 export type ToolCallProviderType = "openai" | "anthropic"
