@@ -2704,6 +2704,8 @@ describe("ClineProvider - Router Models", () => {
 				lmstudio: {},
 				copilot: mockModels,
 				"vercel-ai-gateway": mockModels,
+				huggingface: {},
+				"io-intelligence": {},
 			},
 		})
 	})
@@ -2755,6 +2757,8 @@ describe("ClineProvider - Router Models", () => {
 				litellm: {},
 				copilot: mockModels,
 				"vercel-ai-gateway": mockModels,
+				huggingface: {},
+				"io-intelligence": {},
 			},
 		})
 
@@ -2868,6 +2872,8 @@ describe("ClineProvider - Router Models", () => {
 				lmstudio: {},
 				copilot: mockModels,
 				"vercel-ai-gateway": mockModels,
+				huggingface: {},
+				"io-intelligence": {},
 			},
 		})
 	})

@@ -23,7 +23,7 @@ import { ClineProvider } from "./ClineProvider"
 import { handleCheckpointRestoreOperation } from "./checkpointRestoreHandler"
 import { changeLanguage, t } from "../../i18n"
 import { Package } from "../../shared/package"
-import { RouterName, toRouterName, ModelRecord } from "../../shared/api"
+import { type RouterName, type ModelRecord, toRouterName } from "../../shared/api"
 import { MessageEnhancer } from "./messageEnhancer"
 
 import {
@@ -492,10 +492,10 @@ export const webviewMessageHandler = async (
 					),
 				)
 
-			// If user already opted in to telemetry, enable telemetry service
+			// Enable telemetry by default (when unset) or when explicitly enabled
 			provider.getStateToPostToWebview().then((state) => {
 				const { telemetrySetting } = state
-				const isOptedIn = telemetrySetting === "enabled"
+				const isOptedIn = telemetrySetting !== "disabled"
 				TelemetryService.instance.updateTelemetryState(isOptedIn)
 			})
 
@@ -758,16 +758,19 @@ export const webviewMessageHandler = async (
 		case "requestRouterModels":
 			const { apiConfiguration } = await provider.getState()
 
-			const routerModels: Partial<Record<RouterName, ModelRecord>> = {
+			const routerModels: Record<RouterName, ModelRecord> = {
 				openrouter: {},
-				requesty: {},
-				glama: {},
-				unbound: {},
+				"vercel-ai-gateway": {},
+				huggingface: {},
 				litellm: {},
+				deepinfra: {},
+				"io-intelligence": {},
+				requesty: {},
+				unbound: {},
+				glama: {},
 				ollama: {},
 				lmstudio: {},
 				copilot: {},
-				deepinfra: {},
 			}
 
 			const safeGetModels = async (options: GetModelsOptions): Promise<ModelRecord> => {
@@ -778,11 +781,12 @@ export const webviewMessageHandler = async (
 						`Failed to fetch models in webviewMessageHandler requestRouterModels for ${options.provider}:`,
 						error,
 					)
-					throw error // Re-throw to be caught by Promise.allSettled
+
+					throw error // Re-throw to be caught by Promise.allSettled.
 				}
 			}
 
-			const modelFetchPromises: Array<{ key: RouterName; options: GetModelsOptions }> = [
+			const modelFetchPromises: { key: RouterName; options: GetModelsOptions }[] = [
 				{ key: "openrouter", options: { provider: "openrouter" } },
 				{
 					key: "requesty",
@@ -805,8 +809,9 @@ export const webviewMessageHandler = async (
 				},
 			]
 
-			// Add IO Intelligence if API key is provided
+			// Add IO Intelligence if API key is provided.
 			const ioIntelligenceApiKey = apiConfiguration.ioIntelligenceApiKey
+
 			if (ioIntelligenceApiKey) {
 				modelFetchPromises.push({
 					key: "io-intelligence",
@@ -814,11 +819,12 @@ export const webviewMessageHandler = async (
 				})
 			}
 
-			// Don't fetch Ollama and LM Studio models by default anymore
-			// They have their own specific handlers: requestOllamaModels and requestLmStudioModels
+			// Don't fetch Ollama and LM Studio models by default anymore.
+			// They have their own specific handlers: requestOllamaModels and requestLmStudioModels.
 
 			const litellmApiKey = apiConfiguration.litellmApiKey || message?.values?.litellmApiKey
 			const litellmBaseUrl = apiConfiguration.litellmBaseUrl || message?.values?.litellmBaseUrl
+
 			if (litellmApiKey && litellmBaseUrl) {
 				modelFetchPromises.push({
 					key: "litellm",
@@ -830,24 +836,17 @@ export const webviewMessageHandler = async (
 			const results = await Promise.allSettled(
 				modelFetchPromises.map(async ({ key, options }) => {
 					const models = await safeGetModels(options)
-					return { key, models } // key is RouterName here
+					return { key, models } // The key is `ProviderName` here.
 				}),
 			)
 
-			const fetchedRouterModels: Partial<Record<RouterName, ModelRecord>> = {
-				...routerModels,
-				// Initialize ollama and lmstudio with empty objects since they use separate handlers
-				ollama: {},
-				lmstudio: {},
-			}
-
 			results.forEach((result, index) => {
-				const routerName = modelFetchPromises[index].key // Get RouterName using index
+				const routerName = modelFetchPromises[index].key
 
 				if (result.status === "fulfilled") {
-					fetchedRouterModels[routerName] = result.value.models
+					routerModels[routerName] = result.value.models
 
-					// Ollama and LM Studio settings pages still need these events
+					// Ollama and LM Studio settings pages still need these events.
 					if (routerName === "ollama" && Object.keys(result.value.models).length > 0) {
 						provider.postMessageToWebview({
 							type: "ollamaModels",
@@ -860,11 +859,11 @@ export const webviewMessageHandler = async (
 						})
 					}
 				} else {
-					// Handle rejection: Post a specific error message for this provider
+					// Handle rejection: Post a specific error message for this provider.
 					const errorMessage = result.reason instanceof Error ? result.reason.message : String(result.reason)
 					console.error(`Error fetching models for ${routerName}:`, result.reason)
 
-					fetchedRouterModels[routerName] = {} // Ensure it's an empty object in the main routerModels message
+					routerModels[routerName] = {} // Ensure it's an empty object in the main routerModels message.
 
 					provider.postMessageToWebview({
 						type: "singleRouterModelFetchResponse",
@@ -875,29 +874,23 @@ export const webviewMessageHandler = async (
 				}
 			})
 
-			provider.postMessageToWebview({
-				type: "routerModels",
-				routerModels: fetchedRouterModels as Record<RouterName, ModelRecord>,
-			})
-
+			provider.postMessageToWebview({ type: "routerModels", routerModels })
 			break
 		case "requestOllamaModels": {
-			// Specific handler for Ollama models only
+			// Specific handler for Ollama models only.
 			const { apiConfiguration: ollamaApiConfig } = await provider.getState()
 			try {
-				// Flush cache first to ensure fresh models
+				// Flush cache first to ensure fresh models.
 				await flushModels("ollama")
 
 				const ollamaModels = await getModels({
 					provider: "ollama",
 					baseUrl: ollamaApiConfig.ollamaBaseUrl,
+					apiKey: ollamaApiConfig.ollamaApiKey,
 				})
 
 				if (Object.keys(ollamaModels).length > 0) {
-					provider.postMessageToWebview({
-						type: "ollamaModels",
-						ollamaModels: ollamaModels,
-					})
+					provider.postMessageToWebview({ type: "ollamaModels", ollamaModels: ollamaModels })
 				}
 			} catch (error) {
 				// Silently fail - user hasn't configured Ollama yet
@@ -906,10 +899,10 @@ export const webviewMessageHandler = async (
 			break
 		}
 		case "requestLmStudioModels": {
-			// Specific handler for LM Studio models only
+			// Specific handler for LM Studio models only.
 			const { apiConfiguration: lmStudioApiConfig } = await provider.getState()
 			try {
-				// Flush cache first to ensure fresh models
+				// Flush cache first to ensure fresh models.
 				await flushModels("lmstudio")
 
 				const lmStudioModels = await getModels({
@@ -924,7 +917,7 @@ export const webviewMessageHandler = async (
 					})
 				}
 			} catch (error) {
-				// Silently fail - user hasn't configured LM Studio yet
+				// Silently fail - user hasn't configured LM Studio yet.
 				console.debug("LM Studio models fetch failed:", error)
 			}
 			break
@@ -947,19 +940,18 @@ export const webviewMessageHandler = async (
 			provider.postMessageToWebview({ type: "vsCodeLmModels", vsCodeLmModels })
 			break
 		case "requestHuggingFaceModels":
+			// TODO: Why isn't this handled by `requestRouterModels` above?
 			try {
 				const { getHuggingFaceModelsWithMetadata } = await import("../../api/providers/fetchers/huggingface")
 				const huggingFaceModelsResponse = await getHuggingFaceModelsWithMetadata()
+
 				provider.postMessageToWebview({
 					type: "huggingFaceModels",
 					huggingFaceModels: huggingFaceModelsResponse.models,
 				})
 			} catch (error) {
 				console.error("Failed to fetch Hugging Face models:", error)
-				provider.postMessageToWebview({
-					type: "huggingFaceModels",
-					huggingFaceModels: [],
-				})
+				provider.postMessageToWebview({ type: "huggingFaceModels", huggingFaceModels: [] })
 			}
 			break
 		case "openImage":
@@ -1054,6 +1046,18 @@ export const webviewMessageHandler = async (
 				openFile(customModesFilePath)
 			}
 
+			break
+		}
+		case "openKeyboardShortcuts": {
+			// Open VSCode keyboard shortcuts settings and optionally filter to show the Roo Code commands
+			const searchQuery = message.text || ""
+			if (searchQuery) {
+				// Open with a search query pre-filled
+				await vscode.commands.executeCommand("workbench.action.openGlobalKeybindings", searchQuery)
+			} else {
+				// Just open the keyboard shortcuts settings
+				await vscode.commands.executeCommand("workbench.action.openGlobalKeybindings")
+			}
 			break
 		}
 		case "openMcpSettings": {
@@ -1615,6 +1619,10 @@ export const webviewMessageHandler = async (
 			break
 		case "setHistoryPreviewCollapsed": // Add the new case handler
 			await updateGlobalState("historyPreviewCollapsed", message.bool ?? false)
+			// No need to call postStateToWebview here as the UI already updated optimistically
+			break
+		case "setReasoningBlockCollapsed":
+			await updateGlobalState("reasoningBlockCollapsed", message.bool ?? true)
 			// No need to call postStateToWebview here as the UI already updated optimistically
 			break
 		case "toggleApiConfigPin":
@@ -2292,9 +2300,25 @@ export const webviewMessageHandler = async (
 
 		case "telemetrySetting": {
 			const telemetrySetting = message.text as TelemetrySetting
+			const previousSetting = getGlobalState("telemetrySetting") || "unset"
+			const isOptedIn = telemetrySetting !== "disabled"
+			const wasPreviouslyOptedIn = previousSetting !== "disabled"
+
+			// If turning telemetry OFF, fire event BEFORE disabling
+			if (wasPreviouslyOptedIn && !isOptedIn && TelemetryService.hasInstance()) {
+				TelemetryService.instance.captureTelemetrySettingsChanged(previousSetting, telemetrySetting)
+			}
+			// Update the telemetry state
 			await updateGlobalState("telemetrySetting", telemetrySetting)
-			const isOptedIn = telemetrySetting === "enabled"
-			TelemetryService.instance.updateTelemetryState(isOptedIn)
+			if (TelemetryService.hasInstance()) {
+				TelemetryService.instance.updateTelemetryState(isOptedIn)
+			}
+
+			// If turning telemetry ON, fire event AFTER enabling
+			if (!wasPreviouslyOptedIn && isOptedIn && TelemetryService.hasInstance()) {
+				TelemetryService.instance.captureTelemetrySettingsChanged(previousSetting, telemetrySetting)
+			}
+
 			await provider.postStateToWebview()
 			break
 		}
@@ -2312,6 +2336,17 @@ export const webviewMessageHandler = async (
 				vscode.window.showErrorMessage("Sign in failed.")
 			}
 
+			break
+		}
+		case "cloudLandingPageSignIn": {
+			try {
+				const landingPageSlug = message.text || "supernova"
+				TelemetryService.instance.captureEvent(TelemetryEventName.AUTHENTICATION_INITIATED)
+				await CloudService.instance.login(landingPageSlug)
+			} catch (error) {
+				provider.log(`CloudService#login failed: ${error}`)
+				vscode.window.showErrorMessage("Sign in failed.")
+			}
 			break
 		}
 		case "rooCloudSignOut": {
@@ -2366,6 +2401,38 @@ export const webviewMessageHandler = async (
 				vscode.window.showErrorMessage(`${t("common:errors.manual_url_auth_error")}: ${errorMessage}`)
 			}
 
+			break
+		}
+		case "switchOrganization": {
+			try {
+				const organizationId = message.organizationId ?? null
+
+				// Switch to the new organization context
+				await CloudService.instance.switchOrganization(organizationId)
+
+				// Refresh the state to update UI
+				await provider.postStateToWebview()
+
+				// Send success response back to webview
+				await provider.postMessageToWebview({
+					type: "organizationSwitchResult",
+					success: true,
+					organizationId: organizationId,
+				})
+			} catch (error) {
+				provider.log(`Organization switch failed: ${error}`)
+				const errorMessage = error instanceof Error ? error.message : String(error)
+
+				// Send error response back to webview
+				await provider.postMessageToWebview({
+					type: "organizationSwitchResult",
+					success: false,
+					error: errorMessage,
+					organizationId: message.organizationId ?? null,
+				})
+
+				vscode.window.showErrorMessage(`Failed to switch organization: ${errorMessage}`)
+			}
 			break
 		}
 
@@ -2779,7 +2846,12 @@ export const webviewMessageHandler = async (
 					TelemetryService.instance.captureTabShown(message.tab)
 				}
 
-				await provider.postMessageToWebview({ type: "action", action: "switchTab", tab: message.tab })
+				await provider.postMessageToWebview({
+					type: "action",
+					action: "switchTab",
+					tab: message.tab,
+					values: message.values,
+				})
 			}
 			break
 		}
