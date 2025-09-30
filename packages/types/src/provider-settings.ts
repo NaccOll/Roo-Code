@@ -133,6 +133,7 @@ export const providerNames = [
 	"moonshot",
 	"openai-native",
 	"qwen-code",
+	"copilot",
 	"roo",
 	"sambanova",
 	"vertex",
@@ -404,6 +405,10 @@ const qwenCodeSchema = apiModelIdProviderModelSchema.extend({
 	qwenCodeOauthPath: z.string().optional(),
 })
 
+const copilotSchema = baseProviderSettingsSchema.extend({
+	copilotModelId: z.string().optional(),
+})
+
 const rooSchema = apiModelIdProviderModelSchema.extend({
 	// No additional fields needed - uses cloud authentication.
 })
@@ -452,6 +457,7 @@ export const providerSettingsSchemaDiscriminated = z.discriminatedUnion("apiProv
 	featherlessSchema.merge(z.object({ apiProvider: z.literal("featherless") })),
 	ioIntelligenceSchema.merge(z.object({ apiProvider: z.literal("io-intelligence") })),
 	qwenCodeSchema.merge(z.object({ apiProvider: z.literal("qwen-code") })),
+	copilotSchema.merge(z.object({ apiProvider: z.literal("copilot") })),
 	rooSchema.merge(z.object({ apiProvider: z.literal("roo") })),
 	vercelAiGatewaySchema.merge(z.object({ apiProvider: z.literal("vercel-ai-gateway") })),
 	defaultSchema,
@@ -493,6 +499,7 @@ export const providerSettingsSchema = z.object({
 	...featherlessSchema.shape,
 	...ioIntelligenceSchema.shape,
 	...qwenCodeSchema.shape,
+	...copilotSchema.shape,
 	...rooSchema.shape,
 	...vercelAiGatewaySchema.shape,
 	...codebaseIndexProviderSchema.shape,
@@ -527,6 +534,7 @@ export const modelIdKeys = [
 	"litellmModelId",
 	"huggingFaceModelId",
 	"ioIntelligenceModelId",
+	"copilotModelId",
 	"vercelAiGatewayModelId",
 	"deepInfraModelId",
 ] as const satisfies readonly (keyof ProviderSettings)[]
@@ -578,6 +586,7 @@ export const modelIdKeysByProvider: Record<TypicalProvider, ModelIdKey> = {
 	fireworks: "apiModelId",
 	featherless: "apiModelId",
 	"io-intelligence": "ioIntelligenceModelId",
+	copilot: "copilotModelId",
 	roo: "apiModelId",
 	"vercel-ai-gateway": "vercelAiGatewayModelId",
 }
@@ -611,7 +620,7 @@ export const getApiProtocol = (provider: ProviderName | undefined, modelId?: str
  */
 
 export const MODELS_BY_PROVIDER: Record<
-	Exclude<ProviderName, "fake-ai" | "human-relay" | "gemini-cli" | "lmstudio" | "openai" | "ollama">,
+	Exclude<ProviderName, "fake-ai" | "human-relay" | "gemini-cli" | "lmstudio" | "openai" | "ollama" | "copilot">,
 	{ id: ProviderName; label: string; models: string[] }
 > = {
 	anthropic: {

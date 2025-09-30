@@ -80,6 +80,10 @@ export interface ExtensionMessage {
 		| "ollamaModels"
 		| "lmStudioModels"
 		| "vsCodeLmModels"
+		| "copilotModels"
+		| "copilotAuthStatus"
+		| "copilotAuthError"
+		| "copilotDeviceCode"
 		| "huggingFaceModels"
 		| "vsCodeLmApiAvailable"
 		| "updatePrompt"
@@ -159,6 +163,13 @@ export interface ExtensionMessage {
 	ollamaModels?: ModelRecord
 	lmStudioModels?: ModelRecord
 	vsCodeLmModels?: { vendor?: string; family?: string; version?: string; id?: string }[]
+	copilotModels?: ModelRecord
+	copilotAuthenticated?: boolean
+	copilotDeviceCode?: {
+		user_code: string
+		verification_uri: string
+		expires_in: number
+	}
 	huggingFaceModels?: Array<{
 		id: string
 		object: string

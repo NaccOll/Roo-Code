@@ -22,6 +22,7 @@ import { GetModelsOptions } from "../../../shared/api"
 import { getOllamaModels } from "./ollama"
 import { getLMStudioModels } from "./lmstudio"
 import { getIOIntelligenceModels } from "./io-intelligence"
+import { getCopilotModels } from "./copilot"
 import { getDeepInfraModels } from "./deepinfra"
 import { getHuggingFaceModels } from "./huggingface"
 
@@ -92,6 +93,9 @@ export const getModels = async (options: GetModelsOptions): Promise<ModelRecord>
 				break
 			case "io-intelligence":
 				models = await getIOIntelligenceModels(options.apiKey)
+				break
+			case "copilot":
+				models = await getCopilotModels()
 				break
 			case "vercel-ai-gateway":
 				models = await getVercelAiGatewayModels()
