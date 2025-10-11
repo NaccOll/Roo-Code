@@ -89,6 +89,8 @@ vitest.mock("@roo-code/cloud", () => ({
 				authService: {
 					getSessionToken: () => mockGetSessionTokenFn(),
 				},
+				on: vitest.fn(),
+				off: vitest.fn(),
 			}
 		},
 	},

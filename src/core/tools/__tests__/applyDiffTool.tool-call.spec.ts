@@ -44,6 +44,8 @@ describe("applyDiffTool tool call parsing", () => {
 					getState: async () => ({}),
 				}),
 			},
+			processQueuedMessages: vi.fn(),
+			say: vi.fn(),
 		}
 		mockBlock = {
 			params: { path: "test.ts" },
@@ -51,9 +53,9 @@ describe("applyDiffTool tool call parsing", () => {
 				input: {
 					diff: [
 						{
-							d1: 10,
-							d2: "search content",
-							d3: "replace content",
+							start_line: 10,
+							search: "search content",
+							replace: "replace content",
 						},
 					],
 				},
