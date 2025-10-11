@@ -42,7 +42,7 @@ The \`search\` parameter MUST BE a verbatim, character-for-character copy from t
 							name: "search",
 							type: "string",
 							description:
-								"The exact block of text to be replaced. **CRITICAL:** This text MUST BE a *verbatim copy* from the file, including all whitespace, indentation, and newlines. To maximize success, keep this block as short as possible while ensuring it's unique enough to avoid incorrect matches.",
+								"The exact block of text to be replaced. **CRITICAL:** This text MUST BE a *verbatim copy* from the file, including all whitespace, indentation, and newlines and must be not empty string. To maximize success, keep this block as short as possible while ensuring it's unique enough to avoid incorrect matches.",
 							required: true,
 						},
 						replace: {
@@ -152,18 +152,17 @@ Only use a single line of '=======' between search and replacement content, beca
 function generateMultipleApplyDiffSchema(args: ToolArgs): BaseToolSchema {
 	const schema: BaseToolSchema = {
 		name: "apply_diff",
-		description: `File edit tool. Apply precise, targeted modifications to one or more files using search-and-replace operations. This is the PREFERRED multi-file version that supports batch operations across multiple files for maximum efficiency.
+		description: `Request to apply PRECISE, TARGETED modifications to one or more files by searching for specific sections of content and replacing them. This tool is for SURGICAL EDITS ONLY - specific changes to existing code. This tool supports both single-file and multi-file operations, allowing you to make changes across multiple files in a single request.
 
-PURPOSE: Make specific changes to existing code by locating exact text patterns and replacing them across multiple files in a single operation.
+**IMPORTANT: You MUST use multiple files in a single operation whenever possible to maximize efficiency and minimize back-and-forth.**
 
-RULES:
-1. **BATCH FIRST**: ALWAYS use multiple files in a single operation when possible
-2. **EXACT MATCHING**: Search text must match file content PRECISELY 
-3. **READ FIRST**: Use read_file tool if unsure about exact content
-4. **EFFICIENCY**: Group related changes across files into one call
-5. **SYNTAX AWARENESS**: Check for affected syntax throughout files
+You can perform multiple distinct search and replace operations within a single \`apply_diff\` call by providing multiple SEARCH/REPLACE blocks in the \`diff\` parameter. This is the preferred way to make several targeted changes efficiently.
 
-CRITICAL: This tool maximizes efficiency by handling multiple files at once - use it whenever you need to make changes to more than one file.`,
+The SEARCH section must exactly match existing content including whitespace and indentation.
+If you're not confident in the exact content to search for, use the read_file tool first to get the exact content.
+When applying the diffs, be extra careful to remember to change any closing brackets or other syntax that may be affected by the diff farther down in the file.
+ALWAYS make as many changes in a single 'apply_diff' request as possible using multiple SEARCH/REPLACE blocks.
+The \`search\` parameter MUST BE a verbatim, character-for-character copy from the file content.`,
 		parameters: [
 			{
 				name: "file",
@@ -199,21 +198,21 @@ CRITICAL: This tool maximizes efficiency by handling multiple files at once - us
 										name: "search",
 										type: "string",
 										description:
-											"SEARCH BLOCK: The exact text to find in the file. Must match PRECISELY including all whitespace, tabs, and indentation. Copy directly from the file - do not modify or escape the text.",
+											"The exact block of text to be replaced. **CRITICAL:** This text MUST BE a *verbatim copy* from the file, including all whitespace, indentation, and newlines and must be not empty string. To maximize success, keep this block as short as possible while ensuring it's unique enough to avoid incorrect matches.",
 										required: true,
 									},
 									replace: {
 										name: "replace",
 										type: "string",
 										description:
-											"REPLACE BLOCK: The new text to replace the search block with. Include proper indentation and formatting.",
+											"The new text that will replace the `search` block. **IMPORTANT:** You must provide the correct indentation and formatting for this new code block so it fits seamlessly into the surrounding file content.",
 										required: true,
 									},
 									start_line: {
 										name: "start_line",
 										type: "number",
 										description:
-											"The line number of original content where the search block starts",
+											"The line number of original content where the search block starts.",
 										required: false,
 									},
 								},
