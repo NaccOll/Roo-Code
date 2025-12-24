@@ -25,6 +25,7 @@ import { GetModelsOptions } from "../../../shared/api"
 import { getOllamaModels } from "./ollama"
 import { getLMStudioModels } from "./lmstudio"
 import { getIOIntelligenceModels } from "./io-intelligence"
+import { getCopilotModels } from "./copilot"
 import { getDeepInfraModels } from "./deepinfra"
 import { getHuggingFaceModels } from "./huggingface"
 import { getRooModels } from "./roo"
@@ -98,6 +99,9 @@ async function fetchModelsFromProvider(options: GetModelsOptions): Promise<Model
 			break
 		case "huggingface":
 			models = await getHuggingFaceModels()
+			break
+		case "copilot":
+			models = await getCopilotModels()
 			break
 		case "roo": {
 			// Roo Code Cloud provider requires baseUrl and optional apiKey

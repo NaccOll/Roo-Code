@@ -27,7 +27,7 @@ export type ApiHandlerOptions = Omit<ProviderSettings, "apiProvider"> & {
 
 // RouterName
 
-export type RouterName = DynamicProvider | LocalProvider
+export type RouterName = DynamicProvider | LocalProvider | "copilot"
 
 export const isRouterName = (value: string): value is RouterName => isDynamicProvider(value) || isLocalProvider(value)
 
@@ -184,6 +184,7 @@ const dynamicProviderExtras = {
 	requesty: {} as { apiKey?: string; baseUrl?: string },
 	unbound: {} as { apiKey?: string },
 	ollama: {} as {}, // eslint-disable-line @typescript-eslint/no-empty-object-type
+	copilot: {} as {}, // eslint-disable-line @typescript-eslint/no-empty-object-type
 	lmstudio: {} as {}, // eslint-disable-line @typescript-eslint/no-empty-object-type
 	roo: {} as { apiKey?: string; baseUrl?: string },
 	chutes: {} as { apiKey?: string },

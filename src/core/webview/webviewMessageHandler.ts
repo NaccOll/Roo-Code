@@ -60,6 +60,7 @@ import { getModels, flushModels } from "../../api/providers/fetchers/modelCache"
 import { GetModelsOptions } from "../../shared/api"
 import { generateSystemPrompt } from "./generateSystemPrompt"
 import { getCommand } from "../../utils/commands"
+import { DefaultMessageHandlerRegistry } from "./message-handle"
 
 const ALLOWED_VSCODE_SETTINGS = new Set(["terminal.integrated.inheritEnv"])
 
@@ -79,6 +80,7 @@ export const webviewMessageHandler = async (
 	const getCurrentCwd = () => {
 		return provider.getCurrentTask()?.cwd || provider.cwd
 	}
+	const messageHandler = DefaultMessageHandlerRegistry.getInstance()
 	/**
 	 * Shared utility to find message indices based on timestamp.
 	 * When multiple messages share the same timestamp (e.g., after condense),
@@ -807,6 +809,7 @@ export const webviewMessageHandler = async (
 						ollama: {},
 						lmstudio: {},
 						roo: {},
+						copilot: {},
 						chutes: {},
 					}
 
@@ -884,6 +887,7 @@ export const webviewMessageHandler = async (
 					options: { provider: "litellm", apiKey: litellmApiKey, baseUrl: litellmBaseUrl },
 				})
 			}
+			candidates.push({ key: "copilot", options: { provider: "copilot" } })
 
 			// Apply single provider filter if specified
 			const modelFetchPromises = providerFilter
@@ -3226,6 +3230,15 @@ export const webviewMessageHandler = async (
 		}
 
 		default: {
+			// Try to handle the message using the strategy pattern
+			const handler = await messageHandler.getStrategy(message.type)
+			if (handler) {
+				await handler.handle({ provider, message, marketplaceManager })
+				break
+			}
+
+			// Message type not recognized
+			console.warn(`Unhandled message type: ${message.type}`)
 			// console.log(`Unhandled message type: ${message.type}`)
 			//
 			// Currently unhandled:

@@ -30,6 +30,7 @@ export * from "./xai.js"
 export * from "./vercel-ai-gateway.js"
 export * from "./zai.js"
 export * from "./deepinfra.js"
+export * from "./copilot.js"
 export * from "./minimax.js"
 
 import { anthropicDefaultModelId } from "./anthropic.js"
@@ -64,6 +65,7 @@ import { minimaxDefaultModelId } from "./minimax.js"
 
 // Import the ProviderName type from provider-settings to avoid duplication
 import type { ProviderName } from "../provider-settings.js"
+import { copilotDefaultModelId } from "./copilot.js"
 
 /**
  * Get the default model ID for a given provider.
@@ -131,6 +133,8 @@ export function getProviderDefaultModelId(
 			return sambaNovaDefaultModelId
 		case "fireworks":
 			return fireworksDefaultModelId
+		case "copilot":
+			return copilotDefaultModelId
 		case "featherless":
 			return featherlessDefaultModelId
 		case "io-intelligence":
